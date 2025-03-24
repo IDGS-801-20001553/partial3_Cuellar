@@ -1,0 +1,156 @@
+{% extends "layoutPedidos.html" %}
+{% from "_macrosPedido.html" import input_field %}
+{%import "_macrosPedido.html" as macro%}
+
+
+{% block container %}
+<form method="POST" action="/logout" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <button type="submit" class="btn btn-danger" >cerrar sesión</button>
+</form>
+
+<div class="card p-4 base">
+    <h3 class="text-center">Pedido de Pizza</h3>
+
+    <form method="POST" action="/pedidos" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                {{ macro.input_field(form.nombre, value=session.get('nombre_cliente', '')) }}
+            </div>
+            <div class="col-md-4">
+                {{ macro.input_field(form.direccion, value=session.get('direccion_cliente', '')) }}
+            </div>
+            <div class="col-md-4">
+                {{ macro.input_field(form.telefono, value=session.get('telefono_cliente', '')) }}
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <h5>Tamaño Pizza</h5>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="tamaño" id="chica" value="chica" {% if form.tamaño.data == 'chica' %}checked{% endif %}>
+                    <label class="form-check-label" for="chica">Chica $40</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="tamaño" id="mediana" value="mediana" {% if form.tamaño.data == 'mediana' %}checked{% endif %}>
+                    <label class="form-check-label" for="mediana">Mediana $80</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="tamaño" id="grande" value="grande" {% if form.tamaño.data == 'grande' %}checked{% endif %}>
+                    <label class="form-check-label" for="grande">Grande $120</label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h5>Ingredientes</h5>
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <div class="form-check">
+                            {{ form.jamon(class="form-check-input", id="jamon") }}
+                            <label class="form-check-label" for="jamon">Jamón $10</label>
+                        </div>
+                        <div class="form-check">
+                            {{ form.pina(class="form-check-input", id="pina") }}
+                            <label class="form-check-label" for="pina">Piña $10</label>
+                        </div>
+                        <div class="form-check">
+                            {{ form.champiñones(class="form-check-input", id="champiñones") }}
+                            <label class="form-check-label" for="champiñones">Champiñones $10</label>
+                        </div>
+                    </div>
+                    <div class="ms-5">{{ input_field(form.cantidad) }}</div>
+                </div>
+                <button type="submit" class="btn btn-success mt-3 w-25 ms-5">Agregar</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="card mt-4 p-4 base">
+    <h5>Pedidos Agregados</h5>
+
+    <div class="row">
+        <div class="col-md-7">
+            <table class="table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tamaño</th>
+                        <th>Ingredientes</th>
+                        <th>Num. Pizzas</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in pedidos %}
+                    <tr>
+                        <td>{{ pedido["tamaño"] }}</td>
+                        <td>{{ pedido["ingredientes"] }}</td>
+                        <td>{{ pedido["cantidad"] }}</td>
+                        <td>${{ pedido["subtotal"] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="d-flex justify-content-between mb-3">
+                <form method="POST" >
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                    <button type="submit" class="btn btn-danger" name="quitar">Quitar Última Pizza</button>
+                </form>
+
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                    <button type="submit" class="btn btn-primary" name="terminar">Terminar Pedido</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <h5>Buscar Ventas</h5>
+            <form method="POST" action="{{ url_for('buscar_ventas') }}" >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="tipo_fecha" value="dia" id="dia" >
+                    <label class="form-check-label" for="dia">Día</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="tipo_fecha" value="mes" id="mes" >
+                    <label class="form-check-label" for="mes">Mes</label>
+                </div>
+                <input type="date" class="form-control mt-2" name="fecha">
+                <button type="submit" class="btn btn-secondary mt-3 w-100" name="buscar_ventas">Buscar</button>
+            </form>
+            
+            <div id="resultados-ventas" class="mt-3 p-3 border border-secondary rounded bg-light">
+                {% if resultados %}
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nombre del Cliente</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for venta in resultados %}
+                                <tr>
+                                    <td>{{ venta.nombre }}</td>
+                                    <td>${{ venta.total_pagar }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="mt-3">
+                        <strong>Total de Ventas:</strong> ${{ total_ventas }}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No se encontraron ventas para la fecha seleccionada.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,15 @@
+{% macro input_field(field, placeholder='', class='') %}
+<div class="mb-3">
+    <label for="{{ field.id }}" class="form-label">{{ field.label.text }}</label>
+    {{ field(class_=class, placeholder=placeholder, id=field.id) }}
+    {% if field.errors %}
+        <div class="text-danger">
+            {% for error in field.errors %}
+                <small>{{ error }}</small><br>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+
